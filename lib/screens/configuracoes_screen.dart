@@ -52,6 +52,44 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
     }
   }
 
+  // Desafio Intermediário: apaga o disco e volta aos valores iniciais do app
+  Future<void> _redefinirPadroes() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Redefinir padrões?'),
+        content: const Text(
+          'O nome, o tema e a data do último acesso salvos serão apagados.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Redefinir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true) return;
+
+    await _service.limparTudo();
+    // Com o disco vazio, o serviço devolve os padrões ('Usuário Convidado',
+    // tema claro) e este acesso passa a ser o primeiro
+    await _carregarPreferencias();
+    widget.onTemaAlterado(_modoEscuro);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preferências redefinidas para o padrão.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_carregando) {
@@ -91,6 +129,18 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                 onPressed: _salvarPreferencias,
                 icon: const Icon(Icons.save),
                 label: const Text('Salvar Alterações'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _redefinirPadroes,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                icon: const Icon(Icons.restart_alt),
+                label: const Text('Redefinir Padrões'),
               ),
             ),
           ],
