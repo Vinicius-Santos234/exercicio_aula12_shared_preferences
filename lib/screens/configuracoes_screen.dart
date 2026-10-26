@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/preferences_service.dart';
+import '../utils/formatar_data.dart';
 
 class ConfiguracoesScreen extends StatefulWidget {
   final Function(bool) onTemaAlterado;
@@ -17,6 +18,7 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
 
   bool _modoEscuro = false;
   bool _carregando = true;
+  DateTime? _ultimoAcesso;
 
   @override
   void initState() {
@@ -27,10 +29,12 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
   Future<void> _carregarPreferencias() async {
     final nome = await _service.obterNomeUsuario();
     final modoEscuro = await _service.obterModoEscuro();
+    final ultimoAcesso = await _service.registrarAcesso();
 
     setState(() {
       _nomeController.text = nome;
       _modoEscuro = modoEscuro;
+      _ultimoAcesso = ultimoAcesso;
       _carregando = false;
     });
   }
@@ -87,6 +91,35 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
                 onPressed: _salvarPreferencias,
                 icon: const Icon(Icons.save),
                 label: const Text('Salvar Alterações'),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _construirRodape(context),
+    );
+  }
+
+  // Desafio Básico: rodapé com a data/hora da execução anterior
+  Widget _construirRodape(BuildContext context) {
+    final cor = Theme.of(context).colorScheme.onSurfaceVariant;
+    final texto = _ultimoAcesso == null
+        ? 'Primeiro acesso ao aplicativo'
+        : 'Último acesso: ${formatarDataHora(_ultimoAcesso!)}';
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history, size: 16, color: cor),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                texto,
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: cor),
               ),
             ),
           ],
