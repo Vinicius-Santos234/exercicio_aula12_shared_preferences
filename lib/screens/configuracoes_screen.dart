@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/preferences_service.dart';
 import '../utils/formatar_data.dart';
+import 'tarefas_screen.dart';
 
 class ConfiguracoesScreen extends StatefulWidget {
   final Function(bool) onTemaAlterado;
@@ -59,7 +60,8 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Redefinir padrões?'),
         content: const Text(
-          'O nome, o tema e a data do último acesso salvos serão apagados.',
+          'O nome, o tema, as tarefas e a data do último acesso salvos '
+          'serão apagados.',
         ),
         actions: [
           TextButton(
@@ -100,6 +102,16 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
       appBar: AppBar(
         title: const Text('Configurações & Perfil'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TarefasScreen()),
+            ),
+            tooltip: 'Minhas Tarefas',
+            icon: const Icon(Icons.checklist),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
