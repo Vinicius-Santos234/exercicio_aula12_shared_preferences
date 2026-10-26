@@ -27,10 +27,18 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
     _carregarPreferencias();
   }
 
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    super.dispose();
+  }
+
   Future<void> _carregarPreferencias() async {
     final nome = await _service.obterNomeUsuario();
     final modoEscuro = await _service.obterModoEscuro();
     final ultimoAcesso = await _service.registrarAcesso();
+    // A tela pode ter sido fechada enquanto o disco era lido
+    if (!mounted) return;
 
     setState(() {
       _nomeController.text = nome;
@@ -113,49 +121,71 @@ class _ConfiguracoesScreenState extends State<ConfiguracoesScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nomeController,
-              decoration: const InputDecoration(
-                labelText: 'Nome do Usuário',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
+      // A Column com Spacer estourava a altura com o teclado aberto. Agora a
+      // tela rola quando falta espaço, e a altura mínima do viewport mantém os
+      // botões no fim da tela quando sobra
+      body: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    children: [
+                      TextField(
+                        controller: _nomeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nome do Usuário',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.person),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        title: const Text('Ativar Modo Escuro'),
+                        subtitle: const Text(
+                          'Persiste o tema visual selecionado no disco',
+                        ),
+                        value: _modoEscuro,
+                        onChanged: (valor) =>
+                            setState(() => _modoEscuro = valor),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _salvarPreferencias,
+                          icon: const Icon(Icons.save),
+                          label: const Text('Salvar Alterações'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _redefinirPadroes,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context)
+                                .colorScheme
+                                .error,
+                          ),
+                          icon: const Icon(Icons.restart_alt),
+                          label: const Text('Redefinir Padrões'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            SwitchListTile(
-              title: const Text('Ativar Modo Escuro'),
-              subtitle: const Text(
-                'Persiste o tema visual selecionado no disco',
-              ),
-              value: _modoEscuro,
-              onChanged: (valor) => setState(() => _modoEscuro = valor),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _salvarPreferencias,
-                icon: const Icon(Icons.save),
-                label: const Text('Salvar Alterações'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _redefinirPadroes,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                icon: const Icon(Icons.restart_alt),
-                label: const Text('Redefinir Padrões'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: _construirRodape(context),
